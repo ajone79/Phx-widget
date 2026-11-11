@@ -35,6 +35,16 @@ class Store(context: Context) {
             .apply()
     }
 
+    companion object {
+        /** "3" for "build 3" (set by the GitHub run number), or "dev" for local builds. */
+        fun buildNumber(context: Context): String = try {
+            val v = context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: ""
+            v.removePrefix("build ").ifBlank { "dev" }
+        } catch (e: Exception) {
+            "dev"
+        }
+    }
+
     var lastFetchMs: Long
         get() = sp.getLong("lastFetchMs", 0L)
         set(v) { sp.edit().putLong("lastFetchMs", v).apply() }

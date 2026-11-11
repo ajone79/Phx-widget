@@ -81,6 +81,7 @@ private fun SettingsScreen(store: Store, onDone: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text("Phoenix EU168 widget", style = MaterialTheme.typography.headlineSmall)
+        Hint("Build ${Store.buildNumber(androidx.compose.ui.platform.LocalContext.current)}")
 
         Section("Your ops level")
         Row(verticalAlignment = Alignment.CenterVertically) {

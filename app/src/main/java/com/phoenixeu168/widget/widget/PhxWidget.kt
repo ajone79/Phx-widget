@@ -98,14 +98,15 @@ class PhxWidget : GlanceAppWidget() {
             val now = System.currentTimeMillis() - prefs.timeTravelDays * Engine.DAY_MS
             Triple(Engine.build(repo.events(now), repo.territory(), prefs, now, repo.raids()), prefs, repo.hasData())
         }
+        val build = Store.buildNumber(context)
         provideContent {
-            GlanceTheme { Body(snap, prefs, ok, ZoneId.systemDefault()) }
+            GlanceTheme { Body(snap, prefs, ok, ZoneId.systemDefault(), build) }
         }
     }
 }
 
 @Composable
-private fun Body(s: Snapshot, prefs: Prefs, hasData: Boolean, zone: ZoneId) {
+private fun Body(s: Snapshot, prefs: Prefs, hasData: Boolean, zone: ZoneId, build: String) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -114,7 +115,7 @@ private fun Body(s: Snapshot, prefs: Prefs, hasData: Boolean, zone: ZoneId) {
             .cornerRadius(24.dp)
             .padding(horizontal = 8.dp, vertical = 8.dp),
     ) {
-        Header(s, prefs, zone)
+        Header(s, prefs, zone, build)
         Spacer(GlanceModifier.height(6.dp))
         if (!hasData) {
             Card(accent = Pal.amber) {
@@ -140,7 +141,7 @@ private fun Block(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun Header(s: Snapshot, prefs: Prefs, zone: ZoneId) {
+private fun Header(s: Snapshot, prefs: Prefs, zone: ZoneId, build: String) {
     Row(modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Text("PHX", maxLines = 1, style = TextStyle(color = Pal.amber, fontWeight = FontWeight.Bold, fontSize = 15.sp))
         if (prefs.timeTravelDays > 0) {
@@ -149,6 +150,8 @@ private fun Header(s: Snapshot, prefs: Prefs, zone: ZoneId) {
         }
         Spacer(GlanceModifier.width(6.dp))
         Text("OPS ${prefs.ops}", maxLines = 1, style = TextStyle(color = Pal.muted, fontWeight = FontWeight.Bold, fontSize = 11.sp))
+        Spacer(GlanceModifier.width(6.dp))
+        Text("b$build", maxLines = 1, style = TextStyle(color = Pal.muted, fontSize = 9.sp))
         Spacer(GlanceModifier.width(8.dp))
         Text(
             "reset in ${Fmt.duration(s.nextResetMs - s.nowMs)}",

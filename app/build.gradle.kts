@@ -26,8 +26,24 @@ android {
         }
     }
 
+    // Release key comes from CI secrets; without them the release build is simply unsigned.
+    val releaseStore = System.getenv("RELEASE_KEYSTORE_FILE")
+    if (releaseStore != null) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(releaseStore)
+                storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
-        release { isMinifyEnabled = false }
+        release {
+            isMinifyEnabled = false
+            if (releaseStore != null) signingConfig = signingConfigs.getByName("release")
+        }
     }
 
     compileOptions {

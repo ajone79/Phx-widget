@@ -62,7 +62,7 @@ object Engine {
             }
             .sortedWith(compareBy<EventRow>({ it.endMs }, { it.title }))
 
-    fun build(events: List<GameEvent>, territory: List<TerritoryRow>, prefs: Prefs, now: Long): Snapshot {
+    fun build(events: List<GameEvent>, territory: List<TerritoryRow>, prefs: Prefs, now: Long, raidRows: List<TerritoryRow> = emptyList()): Snapshot {
         val lr = GameClock.lastReset(now)
         val nr = GameClock.nextReset(now)
 
@@ -97,6 +97,7 @@ object Engine {
             upcoming = nextAll.take(prefs.maxNext),
             upcomingMore = (nextAll.size - prefs.maxNext).coerceAtLeast(0),
             territory = nextTerritory(territory, now, 2),
+            raids = if (prefs.showRaids) nextTerritory(raidRows, now, 5) else emptyList(),
             incursion = spot(incursions, now),
             tournament = spot(tournaments, now),
             maintenance = spot(maintenance, now),

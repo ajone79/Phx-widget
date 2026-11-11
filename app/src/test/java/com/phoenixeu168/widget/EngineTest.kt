@@ -118,4 +118,15 @@ class EngineTest {
         val events = listOf(ev(1, "Update 96 maintenance", "2026-11-12T09:00:00Z", "2026-11-12T11:30:00Z", type = "maintenance"))
         assertNotNull(Engine.build(events, emptyList(), Prefs(), now).maintenance)
     }
+
+    @Test fun raidTimersOnlyWhenEnabled() {
+        val raids = listOf(
+            TerritoryRow("Adia", 3, "09:00:00", 0),
+            TerritoryRow("Tigan", 5, "18:00:00", 0),
+        )
+        assertTrue(Engine.build(emptyList(), emptyList(), Prefs(), now, raids).raids.isEmpty())
+        val on = Engine.build(emptyList(), emptyList(), Prefs(showRaids = true), now, raids).raids
+        assertEquals(listOf("Tigan", "Adia"), on.map { it.system })
+        assertEquals(ms("2026-11-13T18:00:00Z"), on[0].startMs)
+    }
 }

@@ -102,6 +102,9 @@ private fun SettingsScreen(store: Store, onDone: () -> Unit) {
         }
         Hint("Only events your ops level can take part in are shown.")
 
+        Section("Raid territories")
+        ToggleRow("Show raid timers (at war)", "Adds the enemy raid territory times to the widget", p.showRaids) { update(p.copy(showRaids = it)) }
+
         Section("Filters")
         ToggleRow("Hide passes, banners and recruit events", null, p.hideMinor) { update(p.copy(hideMinor = it)) }
         ToggleRow("Show long events (over 7 days)", "Arc-long missions and similar", p.includeLong) { update(p.copy(includeLong = it)) }

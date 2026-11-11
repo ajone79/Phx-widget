@@ -29,6 +29,8 @@ data class Prefs(
     val hideMinor: Boolean = true,
     val regions: Set<String> = setOf("eu"),
     val refreshMinutes: Int = 5,
+    /** Raid territory timers (the alliance we are at war with). */
+    val showRaids: Boolean = false,
 )
 
 /** One line in the Now / Next lists (format variants of the same event are merged). */
@@ -58,6 +60,7 @@ data class Snapshot(
     val upcoming: List<EventRow>,
     val upcomingMore: Int,
     val territory: List<TerritorySlot>,
+    val raids: List<TerritorySlot>,
     val incursion: Spot?,
     val tournament: Spot?,
     val maintenance: Spot?,

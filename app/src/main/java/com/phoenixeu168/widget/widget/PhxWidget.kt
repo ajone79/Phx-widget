@@ -95,7 +95,7 @@ class PhxWidget : GlanceAppWidget() {
             val repo = Repo(context)
             val prefs = Store(context).prefs()
             val now = System.currentTimeMillis()
-            Triple(Engine.build(repo.events(now), repo.territory(), prefs, now), prefs, repo.hasData())
+            Triple(Engine.build(repo.events(now), repo.territory(), prefs, now, repo.raids()), prefs, repo.hasData())
         }
         provideContent {
             GlanceTheme { Body(snap, prefs, ok, ZoneId.systemDefault()) }
@@ -124,6 +124,7 @@ private fun Body(s: Snapshot, prefs: Prefs, hasData: Boolean, zone: ZoneId) {
             LazyColumn(modifier = GlanceModifier.fillMaxWidth().defaultWeight()) {
                 item { Block { TerritoryCard(s, zone) } }
                 item { Block { SpotRow(s, zone) } }
+                if (s.raids.isNotEmpty()) item { Block { RaidCard(s, zone) } }
                 if (s.maintenance != null) item { Block { MaintenanceBar(s.maintenance, zone) } }
                 item { Block { EventsCard("NOW", "daily reset ${Fmt.clock(s.nextResetMs, zone)}", Pal.amber, s.current, s.currentMore, s, zone, now = true) } }
                 item { Block { EventsCard("NEXT", "", Pal.cyan, s.upcoming, s.upcomingMore, s, zone, now = false) } }
@@ -218,6 +219,24 @@ private fun TerritoryRowView(t: TerritorySlot, now: Long, zone: ZoneId) {
             maxLines = 1,
             style = TextStyle(color = if (live) Pal.green else Pal.cyan, fontWeight = FontWeight.Bold, fontSize = 13.sp),
         )
+    }
+}
+
+@Composable
+private fun RaidCard(s: Snapshot, zone: ZoneId) {
+    Column(
+        modifier = GlanceModifier.fillMaxWidth().background(Pal.card).cornerRadius(16.dp)
+            .padding(horizontal = 10.dp, vertical = 7.dp),
+    ) {
+        Label("RAID TERRITORIES (WAR)", Pal.red)
+        s.raids.forEach { t ->
+            Row(modifier = GlanceModifier.fillMaxWidth().padding(top = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(t.system, maxLines = 1, style = TextStyle(color = Pal.text, fontWeight = FontWeight.Bold, fontSize = 13.sp))
+                Spacer(GlanceModifier.width(8.dp))
+                Text(Fmt.dayClock(t.startMs, zone), maxLines = 1, modifier = GlanceModifier.defaultWeight(), style = TextStyle(color = Pal.muted, fontSize = 11.sp))
+                Text("in ${Fmt.duration(t.startMs - s.nowMs)}", maxLines = 1, style = TextStyle(color = Pal.red, fontWeight = FontWeight.Bold, fontSize = 12.sp))
+            }
+        }
     }
 }
 

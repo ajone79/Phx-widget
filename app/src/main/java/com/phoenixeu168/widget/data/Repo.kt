@@ -14,6 +14,7 @@ class Repo(context: Context) {
     private val store = Store(ctx)
     private val eventsFile = File(ctx.filesDir, "events.json")
     private val territoryFile = File(ctx.filesDir, "territory.json")
+    private val raidFile = File(ctx.filesDir, "raids.json")
 
     companion object {
         const val EVENTS_URL =
@@ -55,7 +56,7 @@ class Repo(context: Context) {
             val out = ArrayList<TerritoryRow>()
             for (i in 0 until arr.length()) {
                 val o = arr.optJSONObject(i) ?: continue
-                out.add(TerritoryRow(o.optString("system"), o.optInt("weekday"), o.optString("start_utc"), o.optInt("duration_min", 30)))
+                out.add(TerritoryRow(o.optString("system"), o.optInt("weekday"), o.optString("start_utc"), o.optInt("duration_min", 0)))
             }
             return out
         }
@@ -66,6 +67,10 @@ class Repo(context: Context) {
 
     fun territory(): List<TerritoryRow> =
         runCatching { if (territoryFile.exists()) parseTerritory(territoryFile.readText()) else emptyList() }.getOrDefault(emptyList())
+
+    /** Raid timers have no duration column, so each slot is treated as an instant (duration 0). */
+    fun raids(): List<TerritoryRow> =
+        runCatching { if (raidFile.exists()) parseTerritory(raidFile.readText()) else emptyList() }.getOrDefault(emptyList())
 
     fun hasData() = eventsFile.exists()
 
@@ -104,6 +109,20 @@ class Repo(context: Context) {
             }
         } catch (e: Exception) {
             errors.add("territory: ${e.message}")
+        }
+        try {
+            val c = open("$SB_URL/rest/v1/raid_timer_schedule?select=system,weekday,start_utc")
+            c.setRequestProperty("apikey", SB_ANON)
+            c.setRequestProperty("Authorization", "Bearer $SB_ANON")
+            if (c.responseCode == 200) {
+                val body = c.inputStream.bufferedReader().use { it.readText() }
+                parseTerritory(body)
+                raidFile.writeText(body)
+            } else {
+                errors.add("raids HTTP ${c.responseCode}")
+            }
+        } catch (e: Exception) {
+            errors.add("raids: ${e.message}")
         }
         store.lastError = errors.joinToString("; ")
         if (errors.isEmpty()) store.lastFetchMs = System.currentTimeMillis()

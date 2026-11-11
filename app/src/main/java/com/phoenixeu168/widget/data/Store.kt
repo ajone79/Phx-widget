@@ -16,6 +16,7 @@ class Store(context: Context) {
             hideMinor = sp.getBoolean("hideMinor", d.hideMinor),
             regions = sp.getStringSet("regions", d.regions)?.toSet() ?: d.regions,
             refreshMinutes = sp.getInt("refreshMinutes", d.refreshMinutes),
+            showRaids = sp.getBoolean("showRaids", d.showRaids),
         )
     }
 
@@ -28,6 +29,7 @@ class Store(context: Context) {
             .putBoolean("hideMinor", p.hideMinor)
             .putStringSet("regions", p.regions)
             .putInt("refreshMinutes", p.refreshMinutes)
+            .putBoolean("showRaids", p.showRaids)
             .apply()
     }
 

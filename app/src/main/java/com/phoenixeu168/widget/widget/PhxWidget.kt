@@ -13,6 +13,7 @@ import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
@@ -56,7 +57,9 @@ import kotlinx.coroutines.withContext
 import java.time.ZoneId
 
 /** One palette, deliberately the same in light and dark mode: the widget is always a night-sky panel. */
-private fun c(argb: Long) = ColorProvider(day = Color(argb), night = Color(argb))
+private typealias Col = androidx.glance.unit.ColorProvider
+
+private fun c(argb: Long): Col = ColorProvider(day = Color(argb), night = Color(argb))
 
 private object Pal {
     val card = c(0xFF171D3B)
@@ -162,7 +165,7 @@ private fun Header(s: Snapshot, prefs: Prefs, zone: ZoneId) {
 }
 
 @Composable
-private fun Card(accent: ColorProvider, content: @Composable () -> Unit) {
+private fun Card(accent: Col, content: @Composable () -> Unit) {
     Column(
         modifier = GlanceModifier
             .fillMaxWidth()
@@ -177,7 +180,7 @@ private fun Card(accent: ColorProvider, content: @Composable () -> Unit) {
 private fun open(url: String) = actionStartActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
 
 @Composable
-private fun Label(text: String, color: ColorProvider, right: String = "") {
+private fun Label(text: String, color: Col, right: String = "") {
     Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(text, maxLines = 1, modifier = GlanceModifier.defaultWeight(), style = TextStyle(color = color, fontWeight = FontWeight.Bold, fontSize = 10.sp))
         if (right.isNotEmpty()) Text(right, maxLines = 1, style = TextStyle(color = Pal.muted, fontSize = 10.sp))
@@ -228,7 +231,7 @@ private fun SpotRow(s: Snapshot, zone: ZoneId) {
 }
 
 @Composable
-private fun SpotCard(label: String, color: ColorProvider, spot: Spot?, now: Long, zone: ZoneId) {
+private fun SpotCard(label: String, color: Col, spot: Spot?, now: Long, zone: ZoneId) {
     Column(
         modifier = GlanceModifier.fillMaxWidth().background(Pal.card).cornerRadius(16.dp)
             .padding(horizontal = 10.dp, vertical = 7.dp).clickable(open(EVENTS_PAGE)),
@@ -266,7 +269,7 @@ private fun MaintenanceBar(m: Spot, zone: ZoneId) {
 }
 
 @Composable
-private fun EventsCard(label: String, right: String, color: ColorProvider, rows: List<EventRow>, more: Int, s: Snapshot, zone: ZoneId, now: Boolean) {
+private fun EventsCard(label: String, right: String, color: Col, rows: List<EventRow>, more: Int, s: Snapshot, zone: ZoneId, now: Boolean) {
     Column(modifier = GlanceModifier.fillMaxWidth().background(Pal.card).cornerRadius(16.dp).padding(horizontal = 10.dp, vertical = 7.dp)) {
         Label(label, color, right)
         if (rows.isEmpty()) {

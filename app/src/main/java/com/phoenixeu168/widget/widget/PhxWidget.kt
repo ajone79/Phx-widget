@@ -94,7 +94,8 @@ class PhxWidget : GlanceAppWidget() {
         val (snap, prefs, ok) = withContext(Dispatchers.IO) {
             val repo = Repo(context)
             val prefs = Store(context).prefs()
-            val now = System.currentTimeMillis()
+            // Time travel (settings): evaluate everything as if it were N days ago.
+            val now = System.currentTimeMillis() - prefs.timeTravelDays * Engine.DAY_MS
             Triple(Engine.build(repo.events(now), repo.territory(), prefs, now, repo.raids()), prefs, repo.hasData())
         }
         provideContent {
@@ -142,6 +143,10 @@ private fun Block(content: @Composable () -> Unit) {
 private fun Header(s: Snapshot, prefs: Prefs, zone: ZoneId) {
     Row(modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Text("PHX", maxLines = 1, style = TextStyle(color = Pal.amber, fontWeight = FontWeight.Bold, fontSize = 15.sp))
+        if (prefs.timeTravelDays > 0) {
+            Spacer(GlanceModifier.width(4.dp))
+            Text("\u23EA${prefs.timeTravelDays}d", maxLines = 1, style = TextStyle(color = Pal.pink, fontWeight = FontWeight.Bold, fontSize = 11.sp))
+        }
         Spacer(GlanceModifier.width(6.dp))
         Text("OPS ${prefs.ops}", maxLines = 1, style = TextStyle(color = Pal.muted, fontWeight = FontWeight.Bold, fontSize = 11.sp))
         Spacer(GlanceModifier.width(8.dp))

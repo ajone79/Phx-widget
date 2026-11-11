@@ -31,6 +31,8 @@ data class Prefs(
     val refreshMinutes: Int = 5,
     /** Raid territory timers (the alliance we are at war with). */
     val showRaids: Boolean = false,
+    /** Demo mode: pretend it is this many days ago (0 = real time). */
+    val timeTravelDays: Int = 0,
 )
 
 /** One line in the Now / Next lists (format variants of the same event are merged). */

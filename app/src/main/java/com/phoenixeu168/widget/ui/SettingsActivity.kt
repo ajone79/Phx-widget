@@ -133,6 +133,10 @@ private fun SettingsScreen(store: Store, onDone: () -> Unit) {
         Chips(listOf(1, 5, 15), p.refreshMinutes, { "$it min" }) { update(p.copy(refreshMinutes = it)) }
         Hint("How often the widget redraws its countdowns. 1 minute uses a little more battery.")
 
+        Section("Time travel (demo)")
+        Chips(listOf(0, 1, 3, 7, 14), p.timeTravelDays, { if (it == 0) "Off" else "-${it}d" }) { update(p.copy(timeTravelDays = it)) }
+        Hint("Shows the widget as it would have looked that many days ago, so you can see real events moving through Now and Next.")
+
         Section("Data")
         val last = store.lastFetchMs
         Text(

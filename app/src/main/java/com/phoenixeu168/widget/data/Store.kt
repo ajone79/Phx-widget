@@ -17,6 +17,7 @@ class Store(context: Context) {
             regions = sp.getStringSet("regions", d.regions)?.toSet() ?: d.regions,
             refreshMinutes = sp.getInt("refreshMinutes", d.refreshMinutes),
             showRaids = sp.getBoolean("showRaids", d.showRaids),
+            timeTravelDays = sp.getInt("timeTravelDays", d.timeTravelDays),
         )
     }
 
@@ -30,6 +31,7 @@ class Store(context: Context) {
             .putStringSet("regions", p.regions)
             .putInt("refreshMinutes", p.refreshMinutes)
             .putBoolean("showRaids", p.showRaids)
+            .putInt("timeTravelDays", p.timeTravelDays)
             .apply()
     }
 

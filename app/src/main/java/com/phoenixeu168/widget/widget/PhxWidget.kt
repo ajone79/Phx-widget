@@ -29,6 +29,7 @@ import androidx.glance.color.ColorProvider
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.ContentScale
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
@@ -62,8 +63,8 @@ private typealias Col = androidx.glance.unit.ColorProvider
 private fun c(argb: Long): Col = ColorProvider(day = Color(argb), night = Color(argb))
 
 private object Pal {
-    val card = c(0xFF171D3B)
-    val cardHi = c(0xFF1F2750)
+    val card = c(0x99121733)
+    val cardHi = c(0x99121733)
     val text = c(0xFFF1F3FF)
     val muted = c(0xFF8E96BE)
     val amber = c(0xFFFFB347)
@@ -107,29 +108,37 @@ class PhxWidget : GlanceAppWidget() {
 
 @Composable
 private fun Body(s: Snapshot, prefs: Prefs, hasData: Boolean, zone: ZoneId, build: String) {
-    Column(
+    Box(
         modifier = GlanceModifier
             .fillMaxSize()
             .appWidgetBackground()
             .background(ImageProvider(R.drawable.widget_bg))
-            .cornerRadius(24.dp)
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            .cornerRadius(24.dp),
     ) {
-        Header(s, prefs, zone, build)
-        Spacer(GlanceModifier.height(6.dp))
-        if (!hasData) {
-            Card(accent = Pal.amber) {
-                Text("Fetching events...", style = TextStyle(color = Pal.text, fontWeight = FontWeight.Bold, fontSize = 13.sp))
-                Text("Tap refresh once you are online", style = TextStyle(color = Pal.muted, fontSize = 11.sp))
-            }
-        } else {
-            LazyColumn(modifier = GlanceModifier.fillMaxWidth().defaultWeight()) {
-                item { Block { TerritoryCard(s, zone) } }
-                item { Block { SpotRow(s, zone) } }
-                if (s.raids.isNotEmpty()) item { Block { RaidCard(s, zone) } }
-                if (s.maintenance != null) item { Block { MaintenanceBar(s.maintenance, zone) } }
-                item { Block { EventsCard("NOW", "daily reset ${Fmt.clock(s.nextResetMs, zone)}", Pal.amber, s.current, s.currentMore, s, zone, now = true) } }
-                item { Block { EventsCard("NEXT", "", Pal.cyan, s.upcoming, s.upcomingMore, s, zone, now = false) } }
+        // The EU168 phoenix artwork, dimmed, behind everything (the cards are slightly see-through).
+        Image(
+            provider = ImageProvider(R.drawable.widget_art),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = GlanceModifier.fillMaxSize(),
+        )
+        Column(modifier = GlanceModifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 8.dp)) {
+            Header(s, prefs, zone, build)
+            Spacer(GlanceModifier.height(6.dp))
+            if (!hasData) {
+                Card(accent = Pal.amber) {
+                    Text("Fetching events...", style = TextStyle(color = Pal.text, fontWeight = FontWeight.Bold, fontSize = 13.sp))
+                    Text("Tap refresh once you are online", style = TextStyle(color = Pal.muted, fontSize = 11.sp))
+                }
+            } else {
+                LazyColumn(modifier = GlanceModifier.fillMaxWidth().defaultWeight()) {
+                    item { Block { TerritoryCard(s, zone) } }
+                    item { Block { SpotRow(s, zone) } }
+                    if (s.raids.isNotEmpty()) item { Block { RaidCard(s, zone) } }
+                    if (s.maintenance != null) item { Block { MaintenanceBar(s.maintenance, zone) } }
+                    item { Block { EventsCard("NOW", "daily reset ${Fmt.clock(s.nextResetMs, zone)}", Pal.amber, s.current, s.currentMore, s, zone, now = true) } }
+                    item { Block { EventsCard("NEXT", "", Pal.cyan, s.upcoming, s.upcomingMore, s, zone, now = false) } }
+                }
             }
         }
     }

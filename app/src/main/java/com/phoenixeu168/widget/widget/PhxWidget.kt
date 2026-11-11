@@ -236,7 +236,7 @@ private fun RaidCard(s: Snapshot, zone: ZoneId) {
         modifier = GlanceModifier.fillMaxWidth().background(Pal.card).cornerRadius(16.dp)
             .padding(horizontal = 10.dp, vertical = 7.dp),
     ) {
-        Label("RAID TERRITORIES (WAR)", Pal.red)
+        Label("NEXT RAID TERRITORIES (WAR)", Pal.red)
         s.raids.forEach { t ->
             Row(modifier = GlanceModifier.fillMaxWidth().padding(top = 3.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(t.system, maxLines = 1, style = TextStyle(color = Pal.text, fontWeight = FontWeight.Bold, fontSize = 13.sp))

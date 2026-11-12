@@ -49,6 +49,19 @@ class TasksTest {
         assertEquals(Tasks.META, Tasks.category("Complete the daily events", "meta"))
     }
 
+    @Test fun metaEventsAreNotListed() {
+        val ms = { s: String -> Instant.parse(s).toEpochMilli() }
+        val now = ms("2026-11-11T18:30:00Z")
+        val events = listOf(
+            GameEvent(1, "United Front (Meta) - AMS", "meta", "AMS", "arc", null, null, ms("2026-11-10T17:00:00Z"), ms("2026-11-12T17:00:00Z"),
+                "Score in this event by completing One Fleet SMS events."),
+            GameEvent(2, "Haven Part 1 Meta - SMS", "", "SMS", "arc", null, null, ms("2026-11-10T17:00:00Z"), ms("2026-11-12T17:00:00Z")),
+            GameEvent(3, "Drone Sweep - SMS", "hostiles", "SMS", "normal", null, null, ms("2026-11-10T17:00:00Z"), ms("2026-11-12T17:00:00Z"),
+                "Score in this event by destroying Academy Drone Hostiles."),
+        )
+        assertEquals(listOf("Drone Sweep"), Engine.build(events, emptyList(), Prefs(), now).current.map { it.title })
+    }
+
     @Test fun hiddenCategoriesDisappearFromTheWidget() {
         val ms = { s: String -> Instant.parse(s).toEpochMilli() }
         val now = ms("2026-11-11T18:30:00Z")

@@ -14,6 +14,7 @@ object Engine {
     private val FORMAT_SUFFIX = Regex("\\s*[-\u2013]\\s*(SMS|SLB|AMS|ALB|RLB|XALB|XLB)\\s*$", RegexOption.IGNORE_CASE)
     private val MINOR_TITLE = Regex("\\b(pass|banner)\\b", RegexOption.IGNORE_CASE)
     private val MINOR_TYPES = setOf("battlepass", "arc_banner", "recruit", "ticket")
+    private val META_TITLE = Regex("\\bmeta\\b", RegexOption.IGNORE_CASE)
     private val JUNK = Regex("[\\p{So}\\p{Cs}\\p{Mn}]")
     private val SPACES = Regex("\\s+")
 
@@ -36,6 +37,9 @@ object Engine {
 
     private fun opsOk(e: GameEvent, ops: Int) =
         (e.minOps == null || ops >= e.minOps) && (e.maxOps == null || ops <= e.maxOps)
+
+    /** "Meta" events only add up the daily events, which are already listed with their own tasks. */
+    private fun isMeta(e: GameEvent) = e.type == "meta" || META_TITLE.containsMatchIn(e.title)
 
     private fun isMinor(e: GameEvent) = e.type in MINOR_TYPES || MINOR_TITLE.containsMatchIn(e.title)
 
@@ -79,7 +83,7 @@ object Engine {
         val maintenance = events.filter { it.type == "maintenance" && it.endMs > now && it.startMs < now + 3 * DAY_MS }
 
         val normal = events.asSequence()
-            .filter { !isSpecial(it) && it.type != "maintenance" }
+            .filter { !isSpecial(it) && it.type != "maintenance" && !isMeta(it) }
             .filter { opsOk(it, prefs.ops) }
             .filter { !prefs.hideMinor || !isMinor(it) }
             .map { Norm(it, GameClock.snap(it.startMs), GameClock.snap(it.endMs)) }

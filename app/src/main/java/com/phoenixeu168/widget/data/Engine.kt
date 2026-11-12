@@ -41,7 +41,10 @@ object Engine {
 
     private fun isSpecial(e: GameEvent) = TOURNAMENT.containsMatchIn(e.title) || INCURSION.containsMatchIn(e.title)
 
-    private class Norm(val ev: GameEvent, val s: Long, val e: Long)
+    private class Norm(val ev: GameEvent, val s: Long, val e: Long) {
+        val task: String = Tasks.short(baseTitle(ev.title), ev.description, ev.type)
+        val category: String = Tasks.category(task, ev.type)
+    }
 
     private fun spot(list: List<GameEvent>, now: Long): Spot? =
         list.filter { it.endMs > now }.minByOrNull { it.startMs }
@@ -58,6 +61,8 @@ object Engine {
                     endMs = k.third,
                     endsToday = k.third <= nextReset,
                     isNew = k.second >= lastReset,
+                    task = v.first().task,
+                    category = v.first().category,
                 )
             }
             .sortedWith(compareBy<EventRow>({ it.endMs }, { it.title }))
@@ -78,6 +83,7 @@ object Engine {
             .filter { opsOk(it, prefs.ops) }
             .filter { !prefs.hideMinor || !isMinor(it) }
             .map { Norm(it, GameClock.snap(it.startMs), GameClock.snap(it.endMs)) }
+            .filter { it.category !in prefs.hiddenCats }
             .filter { prefs.includeLong || it.e - it.s <= LONG_EVENT_MS }
             .filter { it.e > now }
             .toList()
@@ -96,6 +102,8 @@ object Engine {
             currentMore = (nowAll.size - prefs.maxNow).coerceAtLeast(0),
             upcoming = nextAll.take(prefs.maxNext),
             upcomingMore = (nextAll.size - prefs.maxNext).coerceAtLeast(0),
+            currentAll = nowAll,
+            upcomingAll = nextAll,
             territory = nextTerritory(territory, now, 2),
             raids = if (prefs.showRaids) nextTerritory(raidRows, now, 2) else emptyList(),
             incursion = spot(incursions, now),

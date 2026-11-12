@@ -18,6 +18,7 @@ class Store(context: Context) {
             refreshMinutes = sp.getInt("refreshMinutes", d.refreshMinutes),
             showRaids = sp.getBoolean("showRaids", d.showRaids),
             timeTravelDays = sp.getInt("timeTravelDays", d.timeTravelDays),
+            hiddenCats = sp.getStringSet("hiddenCats", d.hiddenCats)?.toSet() ?: d.hiddenCats,
         )
     }
 
@@ -32,6 +33,7 @@ class Store(context: Context) {
             .putInt("refreshMinutes", p.refreshMinutes)
             .putBoolean("showRaids", p.showRaids)
             .putInt("timeTravelDays", p.timeTravelDays)
+            .putStringSet("hiddenCats", p.hiddenCats)
             .apply()
     }
 

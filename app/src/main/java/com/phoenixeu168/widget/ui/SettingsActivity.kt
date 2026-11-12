@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.phoenixeu168.widget.data.Fmt
 import com.phoenixeu168.widget.data.Prefs
 import com.phoenixeu168.widget.data.Store
+import com.phoenixeu168.widget.data.Tasks
 import com.phoenixeu168.widget.work.Scheduler
 import java.time.ZoneId
 
@@ -112,6 +113,18 @@ private fun SettingsScreen(store: Store, onDone: () -> Unit) {
         ToggleRow("Hide passes, banners and recruit events", null, p.hideMinor) { update(p.copy(hideMinor = it)) }
         ToggleRow("Show long events (over 7 days)", "Arc-long missions and similar", p.includeLong) { update(p.copy(includeLong = it)) }
 
+        Section("Event types to show")
+        Hint("Switch off the types you do not care about. They disappear from the widget and the full list.")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Tasks.CATEGORIES.take(3).forEach { cat -> CatChip(cat, p) { update(it) } }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Tasks.CATEGORIES.drop(3).take(2).forEach { cat -> CatChip(cat, p) { update(it) } }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Tasks.CATEGORIES.drop(5).forEach { cat -> CatChip(cat, p) { update(it) } }
+        }
+
         Section("Incursion region")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("eu" to "EU", "us" to "US", "apac" to "APAC").forEach { (key, label) ->
@@ -175,6 +188,15 @@ private fun ToggleRow(title: String, sub: String?, value: Boolean, onChange: (Bo
         }
         Switch(checked = value, onCheckedChange = onChange)
     }
+}
+
+@Composable
+private fun CatChip(cat: String, p: Prefs, update: (Prefs) -> Unit) {
+    FilterChip(
+        selected = cat !in p.hiddenCats,
+        onClick = { update(p.copy(hiddenCats = if (cat in p.hiddenCats) p.hiddenCats - cat else p.hiddenCats + cat)) },
+        label = { Text(cat) },
+    )
 }
 
 @Composable

@@ -51,6 +51,7 @@ import com.phoenixeu168.widget.data.Snapshot
 import com.phoenixeu168.widget.data.Spot
 import com.phoenixeu168.widget.data.Store
 import com.phoenixeu168.widget.data.TerritorySlot
+import com.phoenixeu168.widget.ui.EventsActivity
 import com.phoenixeu168.widget.ui.SettingsActivity
 import com.phoenixeu168.widget.work.Scheduler
 import kotlinx.coroutines.Dispatchers
@@ -306,13 +307,16 @@ private fun MaintenanceBar(m: Spot, zone: ZoneId) {
 
 @Composable
 private fun EventsCard(label: String, right: String, color: Col, rows: List<EventRow>, more: Int, s: Snapshot, zone: ZoneId, now: Boolean) {
-    Column(modifier = GlanceModifier.fillMaxWidth().background(Pal.card).cornerRadius(16.dp).padding(horizontal = 10.dp, vertical = 7.dp)) {
+    Column(
+        modifier = GlanceModifier.fillMaxWidth().background(Pal.card).cornerRadius(16.dp)
+            .padding(horizontal = 10.dp, vertical = 7.dp).clickable(actionStartActivity<EventsActivity>()),
+    ) {
         Label(label, color, right)
         if (rows.isEmpty()) {
             Text(if (now) "Nothing running for your ops level" else "Nothing scheduled yet", style = TextStyle(color = Pal.muted, fontSize = 11.sp))
         }
         rows.forEach { r -> EventLine(r, s, zone, now) }
-        if (more > 0) Text("+$more more", maxLines = 1, style = TextStyle(color = Pal.muted, fontSize = 10.sp))
+        if (more > 0) Text("+$more more \u00B7 tap for all", maxLines = 1, style = TextStyle(color = Pal.muted, fontSize = 10.sp))
     }
 }
 
@@ -320,7 +324,8 @@ private fun EventsCard(label: String, right: String, color: Col, rows: List<Even
 private fun EventLine(r: EventRow, s: Snapshot, zone: ZoneId, now: Boolean) {
     val left = r.endMs - s.nowMs
     val urgent = now && r.endsToday && left < 3 * 3_600_000L
-    Row(modifier = GlanceModifier.fillMaxWidth().padding(top = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+    Column(modifier = GlanceModifier.fillMaxWidth().padding(top = 3.dp)) {
+    Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text("●", maxLines = 1, style = TextStyle(color = typeColor(r.type), fontSize = 9.sp))
         Spacer(GlanceModifier.width(6.dp))
         Text(r.title, maxLines = 1, modifier = GlanceModifier.defaultWeight(), style = TextStyle(color = Pal.text, fontWeight = FontWeight.Medium, fontSize = 12.sp))
@@ -336,6 +341,15 @@ private fun EventLine(r: EventRow, s: Snapshot, zone: ZoneId, now: Boolean) {
             else -> "in ${Fmt.duration(r.startMs - s.nowMs)}" to Pal.cyan
         }
         Text(text, maxLines = 1, style = TextStyle(color = color, fontWeight = FontWeight.Bold, fontSize = 11.sp))
+    }
+    if (r.task.isNotEmpty()) {
+        Text(
+            r.task,
+            maxLines = 1,
+            modifier = GlanceModifier.padding(start = 15.dp),
+            style = TextStyle(color = Pal.green, fontSize = 10.sp),
+        )
+    }
     }
 }
 

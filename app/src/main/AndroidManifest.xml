@@ -24,6 +24,10 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.EventsActivity"
+            android:exported="false" />
+
         <receiver
             android:name=".widget.PhxWidgetReceiver"
             android:exported="true">

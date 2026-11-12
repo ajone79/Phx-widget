@@ -45,6 +45,7 @@ class Repo(context: Context) {
                         maxOps = if (o.isNull("maxOpsLevel")) null else o.optInt("maxOpsLevel"),
                         startMs = start,
                         endMs = end,
+                        description = o.optString("description"),
                     ),
                 )
             }

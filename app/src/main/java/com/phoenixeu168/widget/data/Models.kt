@@ -11,6 +11,7 @@ data class GameEvent(
     val maxOps: Int?,
     val startMs: Long,
     val endMs: Long,
+    val description: String = "",
 )
 
 /** A weekly Phx territory slot (phx_territory_schedule): weekday 0 = Sunday, start time in UTC. */
@@ -33,6 +34,8 @@ data class Prefs(
     val showRaids: Boolean = false,
     /** Demo mode: pretend it is this many days ago (0 = real time). */
     val timeTravelDays: Int = 0,
+    /** Event categories (see Tasks.CATEGORIES) the user has switched off. */
+    val hiddenCats: Set<String> = emptySet(),
 )
 
 /** One line in the Now / Next lists (format variants of the same event are merged). */
@@ -46,6 +49,9 @@ data class EventRow(
     val endsToday: Boolean,
     /** Started at or after the last daily reset. */
     val isNew: Boolean,
+    /** One-line job, e.g. "Kill FKR hostiles". */
+    val task: String = "",
+    val category: String = Tasks.OTHER,
 )
 
 /** Incursion / tournament / maintenance headline. */
@@ -61,6 +67,9 @@ data class Snapshot(
     /** Starting next, soonest first. */
     val upcoming: List<EventRow>,
     val upcomingMore: Int,
+    /** Every Now / Next event (no row limit), for the full list screen. */
+    val currentAll: List<EventRow> = emptyList(),
+    val upcomingAll: List<EventRow> = emptyList(),
     val territory: List<TerritorySlot>,
     val raids: List<TerritorySlot>,
     val incursion: Spot?,

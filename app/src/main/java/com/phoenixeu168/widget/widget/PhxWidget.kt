@@ -23,6 +23,15 @@ import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
+import androidx.glance.appwidget.lazy.LazyListScope
+import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.currentState
+import androidx.glance.state.GlanceStateDefinition
+import androidx.glance.state.PreferencesGlanceStateDefinition
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.compose.runtime.remember
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.color.ColorProvider
@@ -91,18 +100,41 @@ private fun typeColor(type: String) = when (type) {
 
 class PhxWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Single
+    override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
+
+    private class Data(val snap: Snapshot, val prefs: Prefs, val ok: Boolean)
+
+    private fun load(context: Context): Data {
+        val repo = Repo(context)
+        val prefs = Store(context).prefs()
+        // Time travel (settings): evaluate everything as if it were N days ago.
+        val now = System.currentTimeMillis() - prefs.timeTravelDays * Engine.DAY_MS
+        return Data(Engine.build(repo.events(now), repo.territory(), prefs, now, repo.raids()), prefs, repo.hasData())
+    }
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val (snap, prefs, ok) = withContext(Dispatchers.IO) {
-            val repo = Repo(context)
-            val prefs = Store(context).prefs()
-            // Time travel (settings): evaluate everything as if it were N days ago.
-            val now = System.currentTimeMillis() - prefs.timeTravelDays * Engine.DAY_MS
-            Triple(Engine.build(repo.events(now), repo.territory(), prefs, now, repo.raids()), prefs, repo.hasData())
-        }
-        val build = Store.buildNumber(context)
         provideContent {
-            GlanceTheme { Body(snap, prefs, ok, ZoneId.systemDefault(), build) }
+            // The data is read inside the composition and keyed on a stamp that every refresh changes. A redraw
+            // while the widget's session is still alive then really re-reads settings and events.
+            val stamp = currentState<Preferences>()[STAMP] ?: 0L
+            val d = remember(stamp) { load(context) }
+            val build = remember { Store.buildNumber(context) }
+            GlanceTheme { Body(d.snap, d.prefs, d.ok, ZoneId.systemDefault(), build) }
+        }
+    }
+
+    companion object {
+        private val STAMP = longPreferencesKey("stamp")
+
+        /** Redraw every placed widget with freshly read settings and data. */
+        suspend fun refreshAll(context: Context) {
+            val ids = GlanceAppWidgetManager(context).getGlanceIds(PhxWidget::class.java)
+            ids.forEach { id ->
+                updateAppWidgetState(context, PreferencesGlanceStateDefinition, id) {
+                    it.toMutablePreferences().apply { this[STAMP] = System.currentTimeMillis() }
+                }
+                PhxWidget().update(context, id)
+            }
         }
     }
 }
@@ -137,8 +169,8 @@ private fun Body(s: Snapshot, prefs: Prefs, hasData: Boolean, zone: ZoneId, buil
                     item { Block { SpotRow(s, zone) } }
                     if (s.raids.isNotEmpty()) item { Block { RaidCard(s, zone) } }
                     if (s.maintenance != null) item { Block { MaintenanceBar(s.maintenance, zone) } }
-                    item { Block { EventsCard("NOW", "daily reset ${Fmt.clock(s.nextResetMs, zone)}", Pal.amber, s.current, s.currentMore, s, zone, now = true) } }
-                    item { Block { EventsCard("NEXT", "", Pal.cyan, s.upcoming, s.upcomingMore, s, zone, now = false) } }
+                    eventItems("NOW", "daily reset ${Fmt.clock(s.nextResetMs, zone)}", Pal.amber, s.currentAll, s, zone, now = true)
+                    eventItems("NEXT", "starts at reset ${Fmt.clock(s.nextResetMs, zone)}", Pal.cyan, s.upcomingAll, s, zone, now = false)
                 }
             }
         }
@@ -305,19 +337,25 @@ private fun MaintenanceBar(m: Spot, zone: ZoneId) {
     }
 }
 
-@Composable
-private fun EventsCard(label: String, right: String, color: Col, rows: List<EventRow>, more: Int, s: Snapshot, zone: ZoneId, now: Boolean) {
-    Column(
-        modifier = GlanceModifier.fillMaxWidth().background(Pal.card).cornerRadius(16.dp)
-            .padding(horizontal = 10.dp, vertical = 7.dp).clickable(actionStartActivity<EventsActivity>()),
-    ) {
-        Label(label, color, right)
-        if (rows.isEmpty()) {
-            Text(if (now) "Nothing running for your ops level" else "Nothing scheduled yet", style = TextStyle(color = Pal.muted, fontSize = 11.sp))
+/** One list item per event, so the whole widget scrolls smoothly when there are more events than fit. */
+private fun LazyListScope.eventItems(label: String, right: String, color: Col, rows: List<EventRow>, s: Snapshot, zone: ZoneId, now: Boolean) {
+    val open = actionStartActivity<EventsActivity>()
+    item {
+        Column(modifier = GlanceModifier.fillMaxWidth().background(Pal.card).padding(horizontal = 10.dp, vertical = 6.dp).clickable(open)) {
+            Label(label, color, right)
+            if (rows.isEmpty()) {
+                Text(if (now) "Nothing running for your ops level" else "Nothing scheduled yet", style = TextStyle(color = Pal.muted, fontSize = 11.sp))
+            }
         }
-        rows.forEach { r -> EventLine(r, s, zone, now) }
-        if (more > 0) Text("+$more more \u00B7 tap for all", maxLines = 1, style = TextStyle(color = Pal.muted, fontSize = 10.sp))
     }
+    rows.forEach { r ->
+        item {
+            Column(modifier = GlanceModifier.fillMaxWidth().background(Pal.card).padding(horizontal = 10.dp, vertical = 1.dp).clickable(open)) {
+                EventLine(r, s, zone, now)
+            }
+        }
+    }
+    item { Spacer(GlanceModifier.height(8.dp)) }
 }
 
 @Composable

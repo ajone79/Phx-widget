@@ -139,12 +139,6 @@ private fun SettingsScreen(store: Store, onDone: () -> Unit) {
             }
         }
 
-        Section("Rows on the widget")
-        Text("Now", style = MaterialTheme.typography.labelLarge)
-        Chips(listOf(4, 6, 8, 10, 15), p.maxNow, { "$it" }) { update(p.copy(maxNow = it)) }
-        Text("Next", style = MaterialTheme.typography.labelLarge)
-        Chips(listOf(2, 4, 6, 8, 10), p.maxNext, { "$it" }) { update(p.copy(maxNext = it)) }
-
         Section("Countdown refresh")
         Chips(listOf(1, 5, 15), p.refreshMinutes, { "$it min" }) { update(p.copy(refreshMinutes = it)) }
         Hint("How often the widget redraws its countdowns. 1 minute uses a little more battery.")

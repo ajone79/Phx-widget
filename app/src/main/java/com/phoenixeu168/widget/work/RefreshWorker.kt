@@ -2,7 +2,6 @@ package com.phoenixeu168.widget.work
 
 import android.content.Context
 import androidx.glance.appwidget.GlanceAppWidgetManager
-import androidx.glance.appwidget.updateAll
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.phoenixeu168.widget.data.Repo
@@ -21,7 +20,7 @@ class RefreshWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         }
         val repo = Repo(ctx)
         if (inputData.getBoolean(Scheduler.KEY_FETCH, false) || repo.isStale()) repo.refresh()
-        PhxWidget().updateAll(ctx)
+        PhxWidget.refreshAll(ctx)
         Scheduler.scheduleChain(ctx, Store(ctx).prefs().refreshMinutes, inputData.getInt(Scheduler.KEY_SLOT, -1))
         Result.success()
     }

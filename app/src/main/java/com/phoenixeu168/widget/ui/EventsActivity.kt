@@ -63,7 +63,7 @@ private fun EventsScreen(s: Snapshot, ops: Int, zone: ZoneId) {
         item { Header("NOW", Color(0xFFFFB347)) }
         if (s.currentAll.isEmpty()) item { Empty("Nothing running for your ops level") }
         items(s.currentAll) { Line(it, s, zone, now = true) }
-        item { Header("NEXT 7 DAYS", Color(0xFF5CE1E6)) }
+        item { Header("NEXT (starts at reset)", Color(0xFF5CE1E6)) }
         if (s.upcomingAll.isEmpty()) item { Empty("Nothing scheduled yet") }
         items(s.upcomingAll) { Line(it, s, zone, now = false) }
         item { Text("", modifier = Modifier.padding(24.dp)) }

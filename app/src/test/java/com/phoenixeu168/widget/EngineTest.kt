@@ -46,7 +46,7 @@ class EngineTest {
         assertEquals(s.current[0].endMs, s.current[1].endMs)
     }
 
-    @Test fun nextListsWhatStartsSoonestAndTicksOver() {
+    @Test fun nextIsOnlyTheNextResetBatchAndTicksOver() {
         val events = listOf(
             ev(1, "Later", "2026-11-13T17:00:00Z", "2026-11-14T17:00:00Z"),
             ev(2, "Soon at 16", "2026-11-12T16:00:00Z", "2026-11-13T16:00:00Z"),
@@ -55,7 +55,7 @@ class EngineTest {
         val s = Engine.build(events, emptyList(), Prefs(), now)
         assertEquals(listOf("Running"), s.current.map { it.title })
         // 16:00 UTC is snapped onto the 17:00 reset, then ordered by start
-        assertEquals(listOf("Soon at 16", "Later"), s.upcoming.map { it.title })
+        assertEquals(listOf("Soon at 16"), s.upcoming.map { it.title })
         assertEquals(ms("2026-11-12T17:00:00Z"), s.upcoming[0].startMs)
         // one day on, "Soon at 16" is running and "Later" is next
         val later = Engine.build(events, emptyList(), Prefs(), ms("2026-11-12T18:00:00Z"))

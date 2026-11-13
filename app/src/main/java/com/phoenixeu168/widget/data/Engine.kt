@@ -92,10 +92,10 @@ object Engine {
             .filter { it.e > now }
             .toList()
 
-        // NOW = running right now (ending soonest first); NEXT = what starts next (soonest first).
+        // NOW = running right now (ending soonest first); NEXT = only what starts at the next daily reset (the changeover batch).
         // Both tick over by themselves because they are recomputed against the clock on every redraw.
         val nowAll = group(normal.filter { it.s <= now && it.e > now }, lr, nr)
-        val nextAll = group(normal.filter { it.s > now && it.s <= now + 7 * DAY_MS }, lr, nr)
+        val nextAll = group(normal.filter { it.s > now && it.s <= nr }, lr, nr)
             .sortedWith(compareBy<EventRow>({ it.startMs }, { it.endMs }, { it.title }))
 
         return Snapshot(

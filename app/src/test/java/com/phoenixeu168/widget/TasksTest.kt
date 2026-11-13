@@ -30,6 +30,14 @@ class TasksTest {
         assertEquals("Mine Isogenite & Geodes", t("x", "Score in this event by mining Isogenite & Geodes.", "mining"))
     }
 
+    @Test fun outbreakEvents() {
+        assertEquals("Defeat Klingon strongholds", t("x", "Score in this event by defeating Klingon Polaron War Strongholds."))
+        assertEquals("Defeat FKR strongholds", t("x", "Score in this event by defeating FKR Polaron War Strongholds."))
+        assertEquals("Kill FKR armadas", t("x", "Score in this event by defeating Uncommon, Rare and Epic FKR Armadas.", "armadas"))
+        assertEquals("Kill FKR", t("x", "Score in this event by dealing Infusion Damage to Polaron FKR hostiles."))
+        assertEquals("Kill FKR in anomaly systems", t("x", "Score in this event by destroying Polaron FKR hostiles in FKR Space that are being affected by Galactic Anomalies."))
+    }
+
     @Test fun spendingAndUpgrading() {
         assertEquals("Spend G3 U+ mats", t("x", "Score in this event by Spending G3 U or Higher Materials to earn epic officer Shards.", "recruit"))
         assertEquals("Spend ship parts & upgrade ships", t("Starship Armament", "Score in this event by spending like Ra'ul Reaver, Athena, Borg Sphere parts and spending materials on ship upgrades.", "ship_upgrade"))

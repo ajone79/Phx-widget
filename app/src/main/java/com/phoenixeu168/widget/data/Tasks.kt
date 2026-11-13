@@ -75,6 +75,7 @@ object Tasks {
                 t.contains("directive") && t.contains("krenim") -> "Spend Krenim armada directives"
                 t.contains("directive") -> "Use armada directives"
                 t.contains("group armada") -> "Start group armadas"
+                t.contains("fkr") -> "Kill FKR armadas"
                 t.contains("borg sphere") -> "Kill Borg Sphere solo armadas"
                 t.contains("conqueror") -> "Kill Conqueror Borg solo armadas"
                 t.contains("open armada") -> "Kill open armadas"
@@ -85,7 +86,12 @@ object Tasks {
 
         if (t.contains("outpost retaliation")) return "Defeat outpost attackers"
 
-        if (Regex("(destroying|defeating|destroy|defeat)").containsMatchIn(t) && !t.contains("complet")) {
+        if (t.contains("stronghold")) {
+            val f = listOf("federation", "klingon", "romulan").firstOrNull { t.contains(it) }
+            return if (f != null) "Defeat ${cap(f)} strongholds" else "Defeat FKR strongholds"
+        }
+
+        if (Regex("(destroying|defeating|destroy|defeat|dealing)").containsMatchIn(t) && !t.contains("complet")) {
             val anomaly = if (t.contains("anomal")) " in anomaly systems" else ""
             if (t.contains("powerful hostiles")) return "Kill powerful hostiles"
             val hit = HOSTILE_TARGETS.firstOrNull { it.first.containsMatchIn(t) }?.second

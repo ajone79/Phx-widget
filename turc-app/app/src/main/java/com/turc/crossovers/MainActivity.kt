@@ -103,6 +103,7 @@ private fun Screen() {
         Crossovers.stacks(events, now, now + days * 86_400_000L, band)
     }
     val shown = if (threePlus) all.filter { it.events.size >= 3 } else all
+    val groups = groupStacks(shown, now)
 
     Column(Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = 14.dp)) {
         Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -125,7 +126,7 @@ private fun Screen() {
         }
         if (error != null) Text(error ?: "", color = Color(0xFFFF8A80), fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
 
-        if (shown.isEmpty()) {
+        if (groups.isEmpty()) {
             Text(
                 if (events.isEmpty()) (if (loading) "Loading the event feed…" else "No event data yet. Tap Refresh when you're online.")
                 else "No crossovers in this window for this grade. Try more days or another grade.",
@@ -134,7 +135,7 @@ private fun Screen() {
             )
         }
         LazyColumn(contentPadding = PaddingValues(vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(shown) { s -> StackCard(s, now) }
+            items(groups) { g -> GroupCard(g, now) }
             item {
                 Text(
                     "Matched from the event descriptions in the feed, so treat it as a guide. Passes and metas are left out. Times are your phone's time.",
@@ -145,10 +146,26 @@ private fun Screen() {
     }
 }
 
+private fun shortTitle(t: String): String = t.removePrefix("Outbreak: Battlelines ").removePrefix("Outbreak: ")
+
+/** One action with every window it stacks in, so the same events aren't repeated across cards. */
+private data class Group(val label: String, val extra: Int, val stacks: List<Stack>) {
+    val peak: Int get() = stacks.maxOf { it.events.size }
+}
+
+private fun groupStacks(stacks: List<Stack>, now: Long): List<Group> =
+    stacks.groupBy { it.labels.first() }
+        .map { (label, list) -> Group(label, (list.maxOf { it.labels.size } - 1), list) }
+        .sortedWith(
+            compareBy<Group> { g -> if (g.stacks.any { it.startMs <= now }) 0 else 1 }
+                .thenByDescending { it.peak }
+                .thenBy { it.stacks.first().startMs },
+        )
+
 @Composable
-private fun StackCard(s: Stack, now: Long) {
-    val live = s.startMs <= now
-    val big = s.events.size >= 4
+private fun GroupCard(g: Group, now: Long) {
+    val big = g.peak >= 4
+    val best = g.stacks.maxByOrNull { it.events.size }!!
     Card(
         colors = CardDefaults.cardColors(containerColor = CardBg),
         border = if (big) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
@@ -156,23 +173,34 @@ private fun StackCard(s: Stack, now: Long) {
         Column(Modifier.padding(12.dp)) {
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Text(
-                    "×${s.events.size}",
+                    "×${g.peak}",
                     fontSize = 22.sp, fontWeight = FontWeight.Bold,
                     color = if (big) MaterialTheme.colorScheme.primary else Teal,
                     modifier = Modifier.padding(end = 10.dp),
                 )
                 Column(Modifier.weight(1f)) {
-                    Text(s.labels.first() + if (s.labels.size > 1) " (+${s.labels.size - 1} more)" else "", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                    Text(g.label + if (g.extra > 0) " (+${g.extra} more)" else "", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
                     Text(
-                        if (live) "NOW · ends in ${timeLeft(s.endMs, now)} (${fmt(s.endMs)})"
-                        else "${fmt(s.startMs)} → ${fmt(s.endMs)} · starts in ${timeLeft(s.startMs, now)}",
-                        color = if (live) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 12.sp,
+                        if (g.stacks.size == 1) "One window" else "${g.stacks.size} windows · best ×${best.events.size} " +
+                            (if (best.startMs <= now) "now" else fmt(best.startMs)),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp,
                     )
                 }
             }
-            s.events.forEach { e ->
-                Text("• ${e.title}", fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp, start = 4.dp))
+            g.stacks.forEach { s ->
+                val live = s.startMs <= now
+                Column(Modifier.fillMaxWidth().padding(top = 10.dp)) {
+                    Text(
+                        (if (live) "NOW → ${fmt(s.endMs)} · ends in ${timeLeft(s.endMs, now)}" else "${fmt(s.startMs)} → ${fmt(s.endMs)}") + "  ·  ×${s.events.size}",
+                        color = if (live) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                        fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        s.events.joinToString(" · ") { shortTitle(it.title) },
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
             }
         }
     }

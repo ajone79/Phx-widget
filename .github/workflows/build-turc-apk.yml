@@ -1,0 +1,46 @@
+name: Build Turc APK
+
+on:
+  push:
+    branches: [main]
+    paths: ['turc-app/**', '.github/workflows/build-turc-apk.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: turc-app
+    env:
+      BUILD_NUMBER: ${{ github.run_number }}
+      VERSION_CODE: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.11.1
+      - name: Run unit tests
+        run: gradle :app:testDebugUnitTest
+      - name: Build debug APK
+        run: gradle :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TurcCrossovers-debug-apk
+          path: turc-app/app/build/outputs/apk/debug/app-debug.apk
+      - name: Publish APK as a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk TurcCrossovers.apk
+          gh release create "turc-${{ github.run_number }}" TurcCrossovers.apk \
+            --title "Turc Crossovers build ${{ github.run_number }}" \
+            --notes "Debug APK built from commit ${{ github.sha }}" \
+            --latest=false

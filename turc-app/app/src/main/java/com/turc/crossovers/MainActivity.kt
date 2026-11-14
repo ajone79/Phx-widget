@@ -162,10 +162,28 @@ private fun groupStacks(stacks: List<Stack>, now: Long): List<Group> =
                 .thenBy { it.stacks.first().startMs },
         )
 
+/** Why this window is the one to use, in a sentence or two. */
+private fun reasonFor(best: Stack, others: List<Stack>, now: Long): String {
+    val n = best.events.size
+    val parts = ArrayList<String>()
+    parts.add("One action here scores in $n events at once.")
+    val bestOther = others.maxOfOrNull { it.events.size }
+    when {
+        bestOther == null -> parts.add("It's the only window in this period.")
+        bestOther < n -> parts.add("Other windows only reach ×$bestOther, so this is the most you can get from it.")
+        else -> parts.add("Later windows give the same ×$n, so use whichever suits you.")
+    }
+    if (best.startMs <= now) parts.add("It ends in ${timeLeft(best.endMs, now)}, so use it before then.")
+    return parts.joinToString(" ")
+}
+
 @Composable
 private fun GroupCard(g: Group, now: Long) {
-    val big = g.peak >= 4
-    val best = g.stacks.maxByOrNull { it.events.size }!!
+    var open by remember(g.label) { mutableStateOf(false) }
+    val best = g.stacks.sortedWith(compareByDescending<Stack> { it.events.size }.thenBy { it.startMs }).first()
+    val others = g.stacks.filter { it !== best }
+    val big = best.events.size >= 4
+    val live = best.startMs <= now
     Card(
         colors = CardDefaults.cardColors(containerColor = CardBg),
         border = if (big) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
@@ -173,33 +191,31 @@ private fun GroupCard(g: Group, now: Long) {
         Column(Modifier.padding(12.dp)) {
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Text(
-                    "×${g.peak}",
+                    "×${best.events.size}",
                     fontSize = 22.sp, fontWeight = FontWeight.Bold,
                     color = if (big) MaterialTheme.colorScheme.primary else Teal,
                     modifier = Modifier.padding(end = 10.dp),
                 )
-                Column(Modifier.weight(1f)) {
-                    Text(g.label + if (g.extra > 0) " (+${g.extra} more)" else "", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-                    Text(
-                        if (g.stacks.size == 1) "One window" else "${g.stacks.size} windows · best ×${best.events.size} " +
-                            (if (best.startMs <= now) "now" else fmt(best.startMs)),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp,
-                    )
-                }
+                Text(g.label + if (g.extra > 0) " (+${g.extra} more)" else "", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, modifier = Modifier.weight(1f))
             }
-            g.stacks.forEach { s ->
-                val live = s.startMs <= now
-                Column(Modifier.fillMaxWidth().padding(top = 10.dp)) {
+            Text("BEST TIME", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp))
+            Text(
+                if (live) "Now until ${fmt(best.endMs)}" else "${fmt(best.startMs)} → ${fmt(best.endMs)}",
+                color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp,
+            )
+            Text(reasonFor(best, others, now), fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
+            Text("Counts in:", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
+            best.events.forEach { e -> Text("• ${shortTitle(e.title)}", fontSize = 13.sp, modifier = Modifier.padding(start = 4.dp, top = 2.dp)) }
+            if (others.isNotEmpty()) {
+                TextButton(onClick = { open = !open }, modifier = Modifier.padding(top = 4.dp)) {
+                    Text(if (open) "Hide other windows" else "Other windows (${others.size})")
+                }
+                if (open) others.forEach { s ->
                     Text(
-                        (if (live) "NOW → ${fmt(s.endMs)} · ends in ${timeLeft(s.endMs, now)}" else "${fmt(s.startMs)} → ${fmt(s.endMs)}") + "  ·  ×${s.events.size}",
-                        color = if (live) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                        fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                        (if (s.startMs <= now) "Now → ${fmt(s.endMs)}" else "${fmt(s.startMs)} → ${fmt(s.endMs)}") + "  ·  ×${s.events.size}",
+                        fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp),
                     )
-                    Text(
-                        s.events.joinToString(" · ") { shortTitle(it.title) },
-                        color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp,
-                        modifier = Modifier.padding(top = 2.dp),
-                    )
+                    Text(s.events.joinToString(" · ") { shortTitle(it.title) }, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

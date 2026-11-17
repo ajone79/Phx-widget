@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.phoenixeu168.widget"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.phoenixeu168.widget"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = (System.getenv("VERSION_CODE") ?: "1").toInt()
         versionName = "build ${System.getenv("BUILD_NUMBER") ?: "dev"}"
     }
